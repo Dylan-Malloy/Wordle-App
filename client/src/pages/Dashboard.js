@@ -23,7 +23,6 @@ const Dashboard = () => {
   useEffect(() => {
     if (!user) return;
 
-    // --- 1. Subscribe to hosted lobby ---
     const hostedLobbyQuery = query(
       collection(db, "lobbies"),
       where("host", "==", user.uid)
@@ -41,6 +40,9 @@ const Dashboard = () => {
             uid: doc.id,
             ...doc.data(),
           }));
+
+          // Sort players by number of guesses
+          players.sort((a, b) => (a.guesses?.length || 0) - (b.guesses?.length || 0));
           setHostedPlayers(players);
         });
       } else {
@@ -49,7 +51,6 @@ const Dashboard = () => {
       }
     });
 
-    // --- 2. Subscribe to joined lobbies ---
     const lobbiesRef = collection(db, "lobbies");
 
     const unsubJoined = onSnapshot(lobbiesRef, async (snapshot) => {
@@ -81,13 +82,11 @@ const Dashboard = () => {
     };
   }, [user]);
 
-  // --- Delete hosted lobby ---
   const handleDeleteLobby = async () => {
     if (!hostedLobby) return;
 
     const lobbyRef = doc(db, "lobbies", hostedLobby.id);
     const usersRef = collection(lobbyRef, "users");
-
     const userDocs = await getDocs(usersRef);
     const deletePromises = userDocs.docs.map((userDoc) => deleteDoc(userDoc.ref));
 
@@ -96,7 +95,6 @@ const Dashboard = () => {
     alert("Lobby deleted.");
   };
 
-  // --- Leave joined lobby ---
   const handleLeaveLobby = async (lobbyId) => {
     const userRef = doc(db, "lobbies", lobbyId, "users", user.uid);
     await deleteDoc(userRef);
@@ -109,8 +107,6 @@ const Dashboard = () => {
     <>
       <h1>Dashboard</h1>
       <p>Welcome, {user.email}</p>
-      <p>User ID: {user.uid}</p>
-
       <div style={{ marginTop: "2rem", marginBottom: "1rem" }}>
         <Link to="/lobby/join">Join Lobby</Link>{" "}
         {hostedLobby ? (
@@ -123,28 +119,17 @@ const Dashboard = () => {
           </Link>
         )}
       </div>
-
       <hr />
 
-      {/* Hosted Lobby */}
       {hostedLobby ? (
         <div>
           <h2>Your Hosted Lobby: {hostedLobby.lobbyName}</h2>
           <p>Word: {hostedLobby.word}</p>
-          <h3>Players:</h3>
+          <h3>Scoreboard:</h3>
           <ul>
             {hostedPlayers.map((player) => (
               <li key={player.uid}>
-                <strong>{player.uid}</strong>
-                <ul>
-                  {player.guesses?.length > 0 ? (
-                    player.guesses.map((guess, index) => (
-                      <li key={index}>{guess}</li>
-                    ))
-                  ) : (
-                    <li>No guesses yet</li>
-                  )}
-                </ul>
+                <strong>{player.email}</strong> — Guesses: {player.guesses?.length || 0}
               </li>
             ))}
           </ul>
@@ -156,14 +141,13 @@ const Dashboard = () => {
 
       <hr />
 
-      {/* Joined Lobbies */}
       {joinedLobbies.length > 0 ? (
         <div>
           <h2>Lobbies You've Joined:</h2>
           {joinedLobbies.map((lobby) => (
             <div key={lobby.id} style={{ marginBottom: "1rem" }}>
               <p>
-                <strong>{lobby.lobbyName}</strong> — Hosted by: {lobby.host}
+                <strong>{lobby.lobbyName}</strong> — Hosted by: {lobby.hostEmail || lobby.host}
               </p>
               <Link to={`/lobby/${lobby.host}`}>Go to Lobby</Link>{" "}
               <button onClick={() => handleLeaveLobby(lobby.id)}>Leave</button>
