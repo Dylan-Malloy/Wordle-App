@@ -1,10 +1,10 @@
 import React from "react";
-
 import { useAuth } from "../config/useAuth";
 
 const Dashboard = () => {
-  const user = useAuth();
-
+  const response = useAuth();
+  const user = response.currentUser;
+  console.log(user);
   return (
     <>
       <h1>Dashboard</h1>
