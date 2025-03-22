@@ -1,12 +1,18 @@
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 0;
+  margin: 0;
+}
+
 .navbar {
   display: flex;
   gap: 20px;
   padding: 1rem 2rem;
-  background-color: #222;
+  border-bottom: 1px solid black;
 }
 
 .nav-link {
-  color: white;
+  color: black;
   text-decoration: none;
   font-weight: bold;
   padding: 0.5rem 1rem;
@@ -328,4 +334,155 @@
   color: red;
   font-weight: bold;
   text-align: center;
+}
+
+.lobby-container {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.message.success {
+  color: green;
+}
+
+.message.fail {
+  color: red;
+}
+
+.guess-form {
+  margin: 1rem 0;
+}
+
+.wordle-board {
+  display: grid;
+  grid-template-rows: repeat(6, 1fr);
+  gap: 8px;
+  margin: 2rem auto;
+  width: fit-content;
+}
+
+.wordle-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.wordle-box {
+  width: 60px;
+  height: 60px;
+  border: 2px solid #D3D6DA;
+  background-color: white;
+  font-size: 2rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  transition: background-color 0.3s ease;
+  transform-style: preserve-3d;
+  color: black; /* default color for typing */
+}
+
+.wordle-box.flip {
+  animation: flip 0.6s ease forwards;
+}
+
+/* Staggered delays for each letter in the row */
+.delay-0 { animation-delay: 0s; }
+.delay-1 { animation-delay: 0.2s; }
+.delay-2 { animation-delay: 0.4s; }
+.delay-3 { animation-delay: 0.6s; }
+.delay-4 { animation-delay: 0.8s; }
+
+@keyframes flip {
+  0% {
+    transform: rotateX(0);
+  }
+  50% {
+    transform: rotateX(90deg);
+    background-color: #787C7E;
+    color: transparent;
+  }
+  100% {
+    transform: rotateX(0);
+    color: white;
+  }
+}
+
+.wordle-box.correct {
+  background-color: #6DAA63;
+  color: white;
+  border: none;
+}
+
+.wordle-box.present {
+  background-color: #C8B557;
+  color: white;
+  border: none;
+}
+
+.wordle-box.absent {
+  background-color: #787C7E;
+  color: white;
+  border: none;
+}
+
+.keyboard {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 600px;
+  margin: 2rem auto;
+  justify-content: center;
+}
+
+.key-button {
+  width: 40px;
+  height: 50px;
+  margin: 4px;
+  font-weight: bold;
+  border-radius: 4px;
+  border: none;
+  background-color: #ddd;
+  color: #333;
+  font-size: 1rem;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.key-button.correct {
+  background-color: #6DAA63;
+  color: white;
+}
+.key-button.present {
+  background-color: #C8B557;
+  color: white;
+}
+.key-button.absent {
+  background-color: #787C7E;
+  color: white;
+}
+
+.key-button:disabled {
+  background-color: #777;
+  color: white;
+  cursor: not-allowed;
+}
+
+.player-progress {
+  margin-top: 2rem;
+}
+
+.player-status {
+  padding: 6px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.player-status.correct {
+  background-color: lightgreen;
+}
+
+.player-status.eliminated {
+  background-color: lightcoral;
 }

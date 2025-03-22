@@ -14,6 +14,7 @@ import {
 import { useAuth } from "../../config/useAuth";
 
 const MAX_GUESSES = 6;
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 const Lobby = () => {
   const { lobbyId } = useParams();
@@ -26,6 +27,8 @@ const Lobby = () => {
   const [allPlayers, setAllPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [justSubmittedRow, setJustSubmittedRow] = useState(-1);
+  const [keyboardColors, setKeyboardColors] = useState({});
 
   useEffect(() => {
     if (!lobbyId || !user) return;
@@ -71,8 +74,33 @@ const Lobby = () => {
     fetchLobby();
   }, [lobbyId, user]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const getLetterColors = (guess, solution) => {
+    const result = Array(5).fill("absent");
+    const solutionLetters = solution.split("");
+    const guessLetters = guess.split("");
+
+    // First pass for correct letters
+    for (let i = 0; i < 5; i++) {
+      if (guessLetters[i] === solutionLetters[i]) {
+        result[i] = "correct";
+        solutionLetters[i] = null;
+        guessLetters[i] = null;
+      }
+    }
+
+    // Second pass for present letters
+    for (let i = 0; i < 5; i++) {
+      if (guessLetters[i] && solutionLetters.includes(guessLetters[i])) {
+        result[i] = "present";
+        const index = solutionLetters.indexOf(guessLetters[i]);
+        solutionLetters[index] = null;
+      }
+    }
+
+    return result;
+  };
+
+  const handleSubmit = async () => {
     const normalizedGuess = guess.trim().toLowerCase();
 
     if (normalizedGuess.length !== 5) {
@@ -88,6 +116,22 @@ const Lobby = () => {
     const updatedGuesses = [...guesses, normalizedGuess];
     const correct = normalizedGuess === lobby.word.toLowerCase();
 
+    const colors = getLetterColors(normalizedGuess, lobby.word.toLowerCase());
+    const newColors = { ...keyboardColors };
+
+    for (let i = 0; i < normalizedGuess.length; i++) {
+      const char = normalizedGuess[i].toUpperCase();
+      const color = colors[i];
+
+      if (
+        color === "correct" ||
+        (color === "present" && newColors[char] !== "correct") ||
+        (color === "absent" && !newColors[char])
+      ) {
+        newColors[char] = color;
+      }
+    }
+
     try {
       const userRef = doc(db, "lobbies", lobby.id, "users", user.uid);
       await updateDoc(userRef, {
@@ -97,98 +141,109 @@ const Lobby = () => {
 
       setGuesses(updatedGuesses);
       setHasWon(correct);
+      setJustSubmittedRow(guesses.length);
       setGuess("");
+      setKeyboardColors(newColors);
     } catch (err) {
       console.error(err);
       alert("Error submitting guess.");
     }
   };
 
-  const getLetterColor = (letter, index, word) => {
-    if (word[index] === letter) return "green";
-    if (word.includes(letter)) return "goldenrod";
-    return "lightgray";
+  const handleKeyboardClick = (char) => {
+    if (guess.length < 5 && !hasWon && guesses.length < MAX_GUESSES) {
+      setGuess((prev) => prev + char.toLowerCase());
+    }
+  };
+
+  const handleBackspace = () => {
+    setGuess((prev) => prev.slice(0, -1));
   };
 
   if (authLoading || loading) return <p>Loading...</p>;
   if (error) return <p style={{ color: "red" }}>{error}</p>;
 
   return (
-    <>
+    <div className="lobby-container">
       <h1>Lobby</h1>
       <p>Hosted by: <strong>{lobby.hostEmail || lobbyId}</strong></p>
       <h2>Guess the word!</h2>
 
-      {hasWon && <h3 style={{ color: "green" }}>🎉 You guessed the word!</h3>}
+      {hasWon && <h3 className="message success">🎉 You guessed the word!</h3>}
       {!hasWon && guesses.length >= MAX_GUESSES && (
-        <h3 style={{ color: "red" }}>❌ No more guesses. The word was: {lobby.word}</h3>
+        <h3 className="message fail">❌ No more guesses. The word was: {lobby.word}</h3>
       )}
 
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          maxLength={5}
-          value={guess}
-          onChange={(e) => setGuess(e.target.value.toUpperCase())}
-          disabled={hasWon || guesses.length >= MAX_GUESSES}
-        />
-        <button type="submit" disabled={hasWon || guesses.length >= MAX_GUESSES}>
-          Submit
-        </button>
-      </form>
+      <div className="wordle-board">
+        {[...Array(MAX_GUESSES)].map((_, rowIndex) => {
+          const isCurrentRow = rowIndex === guesses.length;
+          const currentGuess = rowIndex < guesses.length
+            ? guesses[rowIndex]
+            : isCurrentRow
+            ? guess
+            : "";
 
-      <div style={{ marginTop: "2rem" }}>
-        <h3>Your Guesses</h3>
-        {guesses.map((g, i) => (
-          <div key={i} style={{ display: "flex", gap: "8px", marginBottom: "4px" }}>
-            {g.split("").map((char, idx) => (
-              <div
-                key={idx}
-                style={{
-                  width: 32,
-                  height: 32,
-                  backgroundColor: getLetterColor(char, idx, lobby.word.toLowerCase()),
-                  color: "white",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: "bold",
-                  borderRadius: 4,
-                }}
-              >
-                {char.toUpperCase()}
-              </div>
-            ))}
-          </div>
-        ))}
+          const colors = rowIndex < guesses.length
+            ? getLetterColors(guesses[rowIndex], lobby.word.toLowerCase())
+            : [];
+
+          return (
+            <div className="wordle-row" key={rowIndex}>
+              {[...Array(5)].map((_, colIndex) => {
+                const letter = currentGuess[colIndex] || "";
+                const color = colors[colIndex] || "";
+                const flipClass = rowIndex === justSubmittedRow ? `flip delay-${colIndex}` : "";
+                const letterColor = rowIndex === guesses.length ? "black" : "white";
+                return (
+                  <div
+                    key={colIndex}
+                    className={`wordle-box ${color} ${flipClass}`}
+                    style={{ color: letterColor }}
+                  >
+                    {letter.toUpperCase()}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
 
-      <hr />
+      <div className="keyboard">
+        {ALPHABET.map((char) => (
+          <button
+            key={char}
+            className={`key-button ${keyboardColors[char] || ""}`}
+            onClick={() => handleKeyboardClick(char)}
+          >
+            {char}
+          </button>
+        ))}
+        <button className="key-button" onClick={handleBackspace}>⌫</button>
+        <button
+          className="key-button go-button"
+          onClick={handleSubmit}
+          disabled={hasWon || guesses.length >= MAX_GUESSES || guess.length !== 5}
+        >
+          Go
+        </button>
+      </div>
 
-      <div style={{ marginTop: "2rem" }}>
+      <div className="player-progress">
         <h3>Other Players' Progress</h3>
         {allPlayers.filter(p => p.uid !== user.uid).map((p) => {
           const isEliminated = !p.hasGuessedCorrectly && p.guesses.length >= MAX_GUESSES;
           return (
             <div
               key={p.uid}
-              style={{
-                marginBottom: "1rem",
-                backgroundColor: p.hasGuessedCorrectly
-                  ? "lightgreen"
-                  : isEliminated
-                  ? "lightcoral"
-                  : "transparent",
-                padding: "4px 8px",
-                borderRadius: 4,
-              }}
+              className={`player-status ${p.hasGuessedCorrectly ? "correct" : isEliminated ? "eliminated" : ""}`}
             >
               <strong>{p.email}</strong> — Guesses: {p.guesses.length}
             </div>
           );
         })}
       </div>
-    </>
+    </div>
   );
 };
 
