@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { signInWithEmailAndPasswordHandler } from "../config/firebase";
-
+import { useNavigate } from "react-router-dom";
 const Login = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -11,9 +12,11 @@ const Login = () => {
     try {
       const user = await signInWithEmailAndPasswordHandler(email, password);
       console.log("Signed in ", user);
-      // Redirect or show success message here 
-      setError("Success! You have Logged In")
-
+      // Redirect or show success message here
+      setError("Success! You have Logged In");
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1000);
     } catch (error) {
       setError(error.message);
     }
