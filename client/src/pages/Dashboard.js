@@ -49,13 +49,11 @@ const Dashboard = () => {
       }
     });
 
-    // --- 2. Subscribe to lobbies user joined (not hosting) ---
+    // --- 2. Subscribe to joined lobbies ---
     const lobbiesRef = collection(db, "lobbies");
 
     const unsubJoined = onSnapshot(lobbiesRef, async (snapshot) => {
-      const joined = [];
-
-      for (const lobbyDoc of snapshot.docs) {
+      const promises = snapshot.docs.map(async (lobbyDoc) => {
         const lobbyData = lobbyDoc.data();
         const usersRef = collection(lobbyDoc.ref, "users");
         const userDoc = await getDoc(doc(usersRef, user.uid));
@@ -64,13 +62,15 @@ const Dashboard = () => {
         const hasJoined = userDoc.exists();
 
         if (hasJoined && !isHost) {
-          joined.push({
+          return {
             id: lobbyDoc.id,
             ...lobbyData,
-          });
+          };
         }
-      }
+        return null;
+      });
 
+      const joined = (await Promise.all(promises)).filter(Boolean);
       setJoinedLobbies(joined);
       setLoading(false);
     });
@@ -81,7 +81,7 @@ const Dashboard = () => {
     };
   }, [user]);
 
-  // --- Delete lobby and all user subdocs ---
+  // --- Delete hosted lobby ---
   const handleDeleteLobby = async () => {
     if (!hostedLobby) return;
 
@@ -96,7 +96,7 @@ const Dashboard = () => {
     alert("Lobby deleted.");
   };
 
-  // --- Leave lobby ---
+  // --- Leave joined lobby ---
   const handleLeaveLobby = async (lobbyId) => {
     const userRef = doc(db, "lobbies", lobbyId, "users", user.uid);
     await deleteDoc(userRef);
@@ -111,9 +111,17 @@ const Dashboard = () => {
       <p>Welcome, {user.email}</p>
       <p>User ID: {user.uid}</p>
 
-      <div style={{ marginTop: "2rem" }}>
-        <Link to="/lobby/join">Join Lobby</Link> |{" "}
-        <Link to="/lobby/create">Create Lobby</Link>
+      <div style={{ marginTop: "2rem", marginBottom: "1rem" }}>
+        <Link to="/lobby/join">Join Lobby</Link>{" "}
+        {hostedLobby ? (
+          <span style={{ marginLeft: "1rem", color: "gray" }}>
+            (You can only host one lobby)
+          </span>
+        ) : (
+          <Link style={{ marginLeft: "1rem" }} to="/lobby/create">
+            Create Lobby
+          </Link>
+        )}
       </div>
 
       <hr />

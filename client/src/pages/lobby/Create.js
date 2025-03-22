@@ -21,7 +21,7 @@ const Create = () => {
 
     try {
       await createLobby(lobbyName, word, user.uid);
-      navigate(`/lobby/${user.uid}`);
+      navigate("/dashboard");
     } catch (error) {
       setError(error.message);
     }
@@ -34,14 +34,6 @@ const Create = () => {
       word,
       host: userId,
       createdAt: serverTimestamp(),
-    });
-  
-    const usersRef = collection(lobbyRef, "users");
-    await setDoc(doc(usersRef, userId), {
-      uid: userId,
-      guesses: [],
-      hasGuessedCorrectly: false,
-      joinedAt: new Date(),
     });
   };
 
