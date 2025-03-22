@@ -31,6 +31,7 @@ const Create = () => {
     const lobbyRef = doc(db, "lobbies", lobbyName);
     await setDoc(lobbyRef, {
       lobbyName,
+      hostEmail: user.email,
       word,
       host: userId,
       createdAt: serverTimestamp(),
