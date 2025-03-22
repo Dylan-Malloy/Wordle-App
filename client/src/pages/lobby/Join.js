@@ -32,12 +32,10 @@ const Join = () => {
         return;
       }
 
-      // Check if user already exists in subcollection
       const usersRef = collection(lobbyRef, "users");
       const userDocRef = doc(usersRef, currentUser.uid);
       const userDoc = await getDoc(userDocRef);
 
-      // Count users in the lobby
       const userDocs = await getDocs(usersRef);
       if (!userDoc.exists() && userDocs.size >= 5) {
         setError("Lobby is full.");
@@ -45,16 +43,15 @@ const Join = () => {
       }
 
       if (!userDoc.exists()) {
-        // Create user subdoc for tracking guesses
         await setDoc(userDocRef, {
           uid: currentUser.uid,
+          email: currentUser.email, // ✅ Store email here
           guesses: [],
           hasGuessedCorrectly: false,
-          joinedAt: new Date()
+          joinedAt: new Date(),
         });
       }
 
-      // Navigate to the lobby (host is stored on the lobby doc)
       const { host } = lobbySnap.data();
       navigate(`/lobby/${host}`);
     } catch (err) {
