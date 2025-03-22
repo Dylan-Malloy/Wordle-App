@@ -2,7 +2,11 @@ import React, { useState } from "react";
 
 import { signUpWithEmailAndPassword } from "../config/firebase";
 
+import { useNavigate } from "react-router-dom";
+
 const Signup = () => {
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -12,13 +16,16 @@ const Signup = () => {
     try {
       const user = await signUpWithEmailAndPassword(email, password);
       console.log("User created:", user);
-      // Redirect or show success message here 
-      setError("Success! You have sign up")
+      // Redirect or show success message here
+      setError("Success! You have sign up");
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1000);
     } catch (error) {
       setError(error.message);
     }
   };
-  
+
   return (
     <>
       <h1>signup</h1>
