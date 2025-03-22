@@ -9,7 +9,6 @@ import {
   doc,
   getDoc,
   updateDoc,
-  arrayUnion,
   onSnapshot,
 } from "firebase/firestore";
 import { useAuth } from "../../config/useAuth";
@@ -92,7 +91,7 @@ const Lobby = () => {
     try {
       const userRef = doc(db, "lobbies", lobby.id, "users", user.uid);
       await updateDoc(userRef, {
-        guesses: arrayUnion(normalizedGuess),
+        guesses: updatedGuesses,
         hasGuessedCorrectly: correct,
       });
 
@@ -168,19 +167,26 @@ const Lobby = () => {
 
       <div style={{ marginTop: "2rem" }}>
         <h3>Other Players' Progress</h3>
-        {allPlayers.filter(p => p.uid !== user.uid).map((p) => (
-          <div
-            key={p.uid}
-            style={{
-              marginBottom: "1rem",
-              backgroundColor: p.hasGuessedCorrectly ? "lightgreen" : "transparent",
-              padding: "4px 8px",
-              borderRadius: 4,
-            }}
-          >
-            <strong>{p.email}</strong> — Guesses: {p.guesses.length}
-          </div>
-        ))}
+        {allPlayers.filter(p => p.uid !== user.uid).map((p) => {
+          const isEliminated = !p.hasGuessedCorrectly && p.guesses.length >= MAX_GUESSES;
+          return (
+            <div
+              key={p.uid}
+              style={{
+                marginBottom: "1rem",
+                backgroundColor: p.hasGuessedCorrectly
+                  ? "lightgreen"
+                  : isEliminated
+                  ? "lightcoral"
+                  : "transparent",
+                padding: "4px 8px",
+                borderRadius: 4,
+              }}
+            >
+              <strong>{p.email}</strong> — Guesses: {p.guesses.length}
+            </div>
+          );
+        })}
       </div>
     </>
   );

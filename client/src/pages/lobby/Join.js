@@ -45,7 +45,7 @@ const Join = () => {
       if (!userDoc.exists()) {
         await setDoc(userDocRef, {
           uid: currentUser.uid,
-          email: currentUser.email, // ✅ Store email here
+          email: currentUser.email,
           guesses: [],
           hasGuessedCorrectly: false,
           joinedAt: new Date(),
@@ -61,19 +61,22 @@ const Join = () => {
   };
 
   return (
-    <>
-      <h1>Join Lobby</h1>
-      <form onSubmit={handleSubmit}>
-        <label>Enter Lobby Name</label>
+    <div className="join-lobby-container">
+      <h1 className="join-lobby-title">Join Lobby</h1>
+      <form className="join-lobby-form" onSubmit={handleSubmit}>
+        <label htmlFor="lobbyName">Enter Lobby Name</label>
         <input
+          className="join-lobby-input"
           type="text"
           value={lobbyName}
+          id="lobbyName"
+          name="lobbyName"
           onChange={(e) => setLobbyName(e.target.value)}
         />
-        <button type="submit">Join</button>
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        <button className="join-lobby-button" type="submit">Join</button>
+        {error && <p className="join-lobby-error">{error}</p>}
       </form>
-    </>
+    </div>
   );
 };
 

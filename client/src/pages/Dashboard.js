@@ -18,6 +18,7 @@ const Dashboard = () => {
   const [hostedLobby, setHostedLobby] = useState(null);
   const [hostedPlayers, setHostedPlayers] = useState([]);
   const [joinedLobbies, setJoinedLobbies] = useState([]);
+  const [joinedLobbyPlayers, setJoinedLobbyPlayers] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -53,7 +54,10 @@ const Dashboard = () => {
     const lobbiesRef = collection(db, "lobbies");
 
     const unsubJoined = onSnapshot(lobbiesRef, async (snapshot) => {
-      const promises = snapshot.docs.map(async (lobbyDoc) => {
+      const newJoined = [];
+      const newJoinedPlayers = {};
+
+      for (const lobbyDoc of snapshot.docs) {
         const lobbyData = lobbyDoc.data();
         const usersRef = collection(lobbyDoc.ref, "users");
         const userDoc = await getDoc(doc(usersRef, user.uid));
@@ -62,16 +66,18 @@ const Dashboard = () => {
         const hasJoined = userDoc.exists();
 
         if (hasJoined && !isHost) {
-          return {
-            id: lobbyDoc.id,
-            ...lobbyData,
-          };
-        }
-        return null;
-      });
+          newJoined.push({ id: lobbyDoc.id, ...lobbyData });
 
-      const joined = (await Promise.all(promises)).filter(Boolean);
-      setJoinedLobbies(joined);
+          const playerDocs = await getDocs(usersRef);
+          newJoinedPlayers[lobbyDoc.id] = playerDocs.docs.map((doc) => ({
+            uid: doc.id,
+            ...doc.data(),
+          }));
+        }
+      }
+
+      setJoinedLobbies(newJoined);
+      setJoinedLobbyPlayers(newJoinedPlayers);
       setLoading(false);
     });
 
@@ -107,49 +113,41 @@ const Dashboard = () => {
   };
 
   if (!user) return <p>Loading user...</p>;
-
+  if (loading) return <p>Loading...</p>;
+  
   return (
-    <>
-      <h1>Dashboard</h1>
-      <p>Welcome, {user.email}</p>
-      <div style={{ marginTop: "2rem", marginBottom: "1rem" }}>
-        <Link to="/lobby/join">Join Lobby</Link>{" "}
+    <div className="dashboard-container">
+      <h1 className="dashboard-title">Dashboard</h1>
+      <p className="dashboard-welcome">Welcome, {user.email}</p>
+
+      <div className="dashboard-links">
+        <Link to="/lobby/join">Join Lobby</Link>
         {hostedLobby ? (
-          <span style={{ marginLeft: "1rem", color: "gray" }}>
-            (You can only host one lobby)
-          </span>
+          <span className="dashboard-note">(You can only host one lobby)</span>
         ) : (
-          <Link style={{ marginLeft: "1rem" }} to="/lobby/create">
-            Create Lobby
-          </Link>
+          <Link to="/lobby/create">Create Lobby</Link>
         )}
       </div>
+
       <hr />
 
       {hostedLobby ? (
-        <div>
+        <div className="hosted-lobby-section">
           <h2>Your Hosted Lobby: {hostedLobby.lobbyName}</h2>
           <p>Word: {hostedLobby.word}</p>
           <h3>Scoreboard:</h3>
-          <ul>
+          <ul className="scoreboard">
             {hostedPlayers.map((player) => (
-              <li key={player.uid} style={{ marginBottom: "1rem" }}>
+              <li key={player.uid} className="scoreboard-player">
                 <strong>{player.email}</strong>
                 {player.guesses?.map((guess, i) => (
-                  <div key={i} style={{ display: "flex", gap: "6px", margin: "4px 0" }}>
+                  <div key={i} className="guess-row">
                     {guess.split("").map((char, idx) => (
                       <div
                         key={idx}
+                        className="guess-letter"
                         style={{
-                          width: 32,
-                          height: 32,
                           backgroundColor: getLetterColor(char, idx, hostedLobby.word.toLowerCase()),
-                          color: "white",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontWeight: "bold",
-                          borderRadius: 4,
                         }}
                       >
                         {char.toUpperCase()}
@@ -160,7 +158,7 @@ const Dashboard = () => {
               </li>
             ))}
           </ul>
-          <button onClick={handleDeleteLobby}>Delete Lobby</button>
+          <button className="delete-button" onClick={handleDeleteLobby}>Delete Lobby</button>
         </div>
       ) : (
         <p>You are not currently hosting a lobby.</p>
@@ -169,22 +167,43 @@ const Dashboard = () => {
       <hr />
 
       {joinedLobbies.length > 0 ? (
-        <div>
+        <div className="joined-lobbies-section">
           <h2>Lobbies You've Joined:</h2>
           {joinedLobbies.map((lobby) => (
-            <div key={lobby.id} style={{ marginBottom: "1rem" }}>
+            <div key={lobby.id} className="joined-lobby">
               <p>
                 <strong>{lobby.lobbyName}</strong> — Hosted by: {lobby.hostEmail || lobby.host}
               </p>
               <Link to={`/lobby/${lobby.host}`}>Go to Lobby</Link>{" "}
-              <button onClick={() => handleLeaveLobby(lobby.id)}>Leave</button>
+              <button className="leave-button" onClick={() => handleLeaveLobby(lobby.id)}>Leave</button>
+
+              <h4>Players:</h4>
+              <ul className="joined-players">
+                {joinedLobbyPlayers[lobby.id]?.map((player) => {
+                  const isEliminated = !player.hasGuessedCorrectly && player.guesses.length >= 6;
+                  return (
+                    <li
+                      key={player.uid}
+                      className={`joined-player ${
+                        player.hasGuessedCorrectly
+                          ? "player-correct"
+                          : isEliminated
+                          ? "player-eliminated"
+                          : ""
+                      }`}
+                    >
+                      <strong>{player.email}</strong> — Guesses: {player.guesses.length}
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
           ))}
         </div>
       ) : (
         <p>You haven't joined any lobbies yet.</p>
       )}
-    </>
+    </div>
   );
 };
 
