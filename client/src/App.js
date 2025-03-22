@@ -11,6 +11,8 @@ import Join from "./pages/lobby/Join";
 import Lobby from "./pages/lobby/Lobby";
 import Navbar from "./components/Navbar";
 
+import "./App.css";
+
 function App() {
   return (
     <Router>

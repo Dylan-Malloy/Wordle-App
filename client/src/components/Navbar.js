@@ -1,14 +1,12 @@
-import React from 'react'
+import React from "react";
 
 const Navbar = () => {
   return (
-    <>
-     <div style={{ display: "flex", gap: "20px"}}>
-        <a href='/'>Home</a>
-        <a href='/dashboard'>Dashboard</a>    
-    </div> 
-    </>
-  )
-}
+    <nav className="navbar">
+      <a className="nav-link" href="/">Home</a>
+      <a className="nav-link" href="/dashboard">Dashboard</a>
+    </nav>
+  );
+};
 
-export default Navbar
+export default Navbar;

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useAuth } from "../../config/useAuth";
 import { db } from "../../config/firebase";
-import { doc, setDoc, serverTimestamp, collection } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 const Create = () => {
@@ -39,11 +39,12 @@ const Create = () => {
   };
 
   return (
-    <>
-      <h1>Create Lobby</h1>
-      <form onSubmit={handleSubmit}>
-        <label>Enter Lobby Name</label>
+    <div className="create-lobby-container">
+      <h1 className="create-lobby-title">Create Lobby</h1>
+      <form className="create-lobby-form" onSubmit={handleSubmit}>
+        <label htmlFor="lobbyName">Enter Lobby Name</label>
         <input
+          className="create-lobby-input"
           value={lobbyName}
           type="text"
           id="lobbyName"
@@ -51,8 +52,9 @@ const Create = () => {
           onChange={(e) => setLobbyName(e.target.value)}
         />
 
-        <label>Wordle Word</label>
+        <label htmlFor="word">Wordle Word</label>
         <input
+          className="create-lobby-input"
           value={word}
           type="text"
           id="word"
@@ -60,11 +62,11 @@ const Create = () => {
           onChange={(e) => setWord(e.target.value)}
         />
 
-        <button type="submit">Create Lobby</button>
+        <button className="create-lobby-button" type="submit">Create Lobby</button>
 
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        {error && <p className="create-lobby-error">{error}</p>}
       </form>
-    </>
+    </div>
   );
 };
 
