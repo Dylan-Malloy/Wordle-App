@@ -16,6 +16,8 @@ const Dashboard = () => {
       ) : (
         <p>Loading user...</p>
       )}
+      <a href="/lobby/join">Join Lobby</a>
+      <a href="/lobby/create">Create Lobby</a>
     </>
   );
 };
