@@ -56,7 +56,6 @@ const Lobby = () => {
           setError("You are not a participant in this lobby.");
         }
 
-        // Live player progress
         const usersRef = collection(lobbyDoc.ref, "users");
         onSnapshot(usersRef, (snapshot) => {
           const players = snapshot.docs.map((doc) => doc.data());
@@ -170,7 +169,15 @@ const Lobby = () => {
       <div style={{ marginTop: "2rem" }}>
         <h3>Other Players' Progress</h3>
         {allPlayers.filter(p => p.uid !== user.uid).map((p) => (
-          <div key={p.uid} style={{ marginBottom: "1rem" }}>
+          <div
+            key={p.uid}
+            style={{
+              marginBottom: "1rem",
+              backgroundColor: p.hasGuessedCorrectly ? "lightgreen" : "transparent",
+              padding: "4px 8px",
+              borderRadius: 4,
+            }}
+          >
             <strong>{p.email}</strong> — Guesses: {p.guesses.length}
           </div>
         ))}

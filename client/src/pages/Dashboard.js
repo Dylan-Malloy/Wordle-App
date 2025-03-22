@@ -41,7 +41,6 @@ const Dashboard = () => {
             ...doc.data(),
           }));
 
-          // Sort players by number of guesses
           players.sort((a, b) => (a.guesses?.length || 0) - (b.guesses?.length || 0));
           setHostedPlayers(players);
         });
@@ -101,6 +100,12 @@ const Dashboard = () => {
     alert("You left the lobby.");
   };
 
+  const getLetterColor = (letter, index, word) => {
+    if (word[index] === letter) return "green";
+    if (word.includes(letter)) return "goldenrod";
+    return "lightgray";
+  };
+
   if (!user) return <p>Loading user...</p>;
 
   return (
@@ -128,8 +133,30 @@ const Dashboard = () => {
           <h3>Scoreboard:</h3>
           <ul>
             {hostedPlayers.map((player) => (
-              <li key={player.uid}>
-                <strong>{player.email}</strong> — Guesses: {player.guesses?.length || 0}
+              <li key={player.uid} style={{ marginBottom: "1rem" }}>
+                <strong>{player.email}</strong>
+                {player.guesses?.map((guess, i) => (
+                  <div key={i} style={{ display: "flex", gap: "6px", margin: "4px 0" }}>
+                    {guess.split("").map((char, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          width: 32,
+                          height: 32,
+                          backgroundColor: getLetterColor(char, idx, hostedLobby.word.toLowerCase()),
+                          color: "white",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontWeight: "bold",
+                          borderRadius: 4,
+                        }}
+                      >
+                        {char.toUpperCase()}
+                      </div>
+                    ))}
+                  </div>
+                ))}
               </li>
             ))}
           </ul>
