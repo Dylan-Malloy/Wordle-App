@@ -9,10 +9,12 @@ import PrivateRoute from "./components/PrivateRoute";
 import Create from "./pages/lobby/Create";
 import Join from "./pages/lobby/Join";
 import Lobby from "./pages/lobby/Lobby";
+import Navbar from "./components/Navbar";
 
 function App() {
   return (
     <Router>
+      <Navbar/>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
