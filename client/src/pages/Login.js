@@ -1,9 +1,50 @@
-import React from "react";
+import React, { useState } from "react";
+import { signInWithEmailAndPasswordHandler } from "../config/firebase";
 
 const Login = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const user = await signInWithEmailAndPasswordHandler(email, password);
+      console.log("Signed in ", user);
+      // Redirect or show success message here 
+      setError("Success! You have Logged In")
+
+    } catch (error) {
+      setError(error.message);
+    }
+  };
+
   return (
     <>
-      <h1>login</h1>
+      <h1>Login</h1>
+      <form onSubmit={handleSubmit}>
+        <label>Email</label>
+        <input
+          value={email}
+          type="text"
+          id="email"
+          name="email"
+          onChange={(e) => setEmail(e.target.value)}
+        ></input>
+
+        <label>Password</label>
+        <input
+          value={password}
+          type="password"
+          id="password"
+          name="password"
+          onChange={(e) => setPassword(e.target.value)}
+        ></input>
+
+        <button type="submit">Login</button>
+
+        {error && <p style={{ color: "red" }}>{error}</p>}
+      </form>
     </>
   );
 };
